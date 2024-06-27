@@ -17,7 +17,7 @@ import xbmcgui
 import xbmcplugin
 import json
 
-from dumpert_const import LANGUAGE, IMAGES_PATH, SETTINGS, convertToUnicodeString, log, SFW_HEADERS, NSFW_HEADERS, \
+from resources.lib.dumpert_const import LANGUAGE, IMAGES_PATH, SETTINGS, convertToUnicodeString, log, SFW_HEADERS, NSFW_HEADERS, \
     DAY, WEEK, MONTH, DAY_TOPPERS_URL, WEEK_TOPPERS_URL, MONTH_TOPPERS_URL, LATEST_URL, VIDEO_QUALITY_MOBILE, \
     VIDEO_QUALITY_TABLET, VIDEO_QUALITY_720P
 
@@ -228,7 +228,7 @@ class Main(object):
                 if item['media'][0]['variants'][0]['version'] == 'embed':
                     if str(item['media'][0]['variants'][0]['uri']).find("youtube:") >= 0:
                         youtube_id = str(item['media'][0]['variants'][0]['uri']).replace("youtube:","")
-                        file = "plugin://plugin.video.youtube/play/?video_id=" + youtube_id
+                        url = "plugin://plugin.video.youtube/play/?video_id=" + youtube_id
                     else:
 
                         log("skipping mediatype", str(item['media'][0]['variants'][0]['uri']))
@@ -248,6 +248,13 @@ class Main(object):
                         file = self.find_tablet_video(file, item)
                         file = self.find_mobile_video(file, item)
 
+                    # Build link to media
+                    # let's remove any non-ascii characters from the title, to prevent errors with urllib.parse.parse_qs of the parameters
+                    parameters = {"action": "play-file",
+                              "file": file,
+                              "title": title.encode('ascii', 'ignore')}
+                    url = self.plugin_url + '?' + urllib.parse.urlencode(parameters)
+
                 # log("title", title)
 
                 log("json file", file)
@@ -260,13 +267,6 @@ class Main(object):
                                   'fanart': os.path.join(IMAGES_PATH, 'fanart-blur.jpg')})
                 list_item.setProperty('IsPlayable', 'true')
 
-                # let's remove any non-ascii characters from the title, to prevent errors with urllib.parse.parse_qs of the parameters
-                title = title.encode('ascii', 'ignore')
-
-                parameters = {"action": "play-file",
-                              "file": file,
-                              "title": title}
-                url = self.plugin_url + '?' + urllib.parse.urlencode(parameters)
                 is_folder = False
                 # Add refresh option to context menu
                 list_item.addContextMenuItems([('Refresh', 'Container.Refresh')])
